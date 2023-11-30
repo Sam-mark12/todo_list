@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO APP</title>
+    <link rel="icon" type="image/x-icon" href="/dist/images/td.png">
+    <link rel="stylesheet" href="/dist/output.css">
+</head>
+
+<body class="bg-black"> 
+    <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 w-full">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <img src="/dist/images/TODOimage.png" class="h-8" alt="todolist Logo" />
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">TODO LIST</span>
+            </a>    
+            <div id="message" class="hidden bg-green-500 text-white px-4 py-2 mt-4 rounded-md">
+            
+            </div>
+            
+                <button class="border border-t-blue-300 bg-blue-400 rounded-md p-2 m-1"><a href="/logout">SIGN OUT</a></button>
+    
+        </div> 
+    </nav>
+
+    <div class=" mt-32 ml-20"> 
+        <form action="/add/todo" method="post" class="flex items-center">
+            <input type="text" name="todos"  placeholder="ENTER TEXT"   class=" w-4/5  p-6 border-2 border-black bg-white h-10 px-5 pr-16 rounded-lg text-sm active:bg-black focus:outline-double">
+            <input type="submit" value="Add Todo" class="p-2 m-1 border border-t-blue-300 bg-blue-400  rounded-lg">
+        </form>
+        <ul id="todoList" class="list-none p-0"></ul>
+        
+        </div>
+        <script>
+            async function getPost() {
+                const myPost = await fetch("http://localhost:3000/show");
+                const response = await myPost.json();
+                const todoList = document.getElementById("todoList");
+                const messageDiv = document.getElementById("message");
+        
+                response.forEach(item => {
+                    const listItem = document.createElement("li");
+                    listItem.classList.add("p-2", "border-b", "border-gray-200","text-white", "hover:bg-pink-600", "flex", "justify-between", "items-center");
+        
+                    const spanElement = document.createElement("span");
+                    spanElement.textContent = item.todos;
+                    listItem.appendChild(spanElement);
+        
+                    // delete operation
+                    const buttonDiv = document.createElement("div");
+                    buttonDiv.classList.add("flex", "space-x-2");
+        
+                    const deleteButton = document.createElement("button");
+                    deleteButton.classList.add("bg-red-500", "text-white", "px-2","mr-5", "py-1", "rounded", "hover:bg-red-600");
+                    deleteButton.textContent = "Delete";
+                    deleteButton.dataset.id = item._id;
+                    deleteButton.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var id = this.dataset.id;
+                        
+                            fetch("http://localhost:3000/delete/" + id, {
+                                method: 'DELETE',
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    listItem.remove();
+                                    showMessage("Item deleted successfully!", "bg-green-500");
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                    
+                                });
+                        
+                    });
+        
+                    const editButton = document.createElement("button");
+                    editButton.classList.add("bg-blue-500", "text-white","mr-16", "px-2", "py-1", "rounded", "hover:bg-blue-600");
+                    editButton.textContent = "Edit";
+                    editButton.dataset.id = item._id;
+                    editButton.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        var id = this.dataset.id;
+                        var newTask = prompt("Enter new task");
+                        if (newTask !== null) {
+                            fetch("http://localhost:3000/edit/" + id, {
+                                method: "PUT",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ todos: newTask })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    spanElement.textContent = data.todos;
+                                    showMessage("Item edited successfully!", "bg-green-500");
+                                })
+                                .catch((err) => {
+                                    console.log("Error", err);
+                                    showMessage("Error editing item!", "bg-red-500");
+                                });
+                        }
+                    });
+        
+                    buttonDiv.appendChild(deleteButton);
+                    buttonDiv.appendChild(editButton);
+        
+                    listItem.appendChild(buttonDiv);
+                    todoList.appendChild(listItem);
+                });
+        
+                function showMessage(message, bgColor) {
+                    messageDiv.textContent = message;
+                    messageDiv.classList.remove("hidden");
+                    messageDiv.classList.add(bgColor);
+        
+    
+                    setTimeout(() => {
+                        messageDiv.classList.add("hidden");
+                        messageDiv.classList.remove(bgColor);
+                    }, 1000);
+                }
+            }
+        
+            getPost();
+        </script>
+        
+        </body>
+        </html>
+
+
+
